@@ -1,0 +1,38 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    background-color: #FAF6ED; /* Warm Cream Base */
+    color: #2D1E22; /* Deep Espresso-Burgundy Charcoal */
+  }
+}
+
+/* Custom polished Burgundy & Cream scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #F4ECE0;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #D1B487;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #8F192E;
+}
+
+/* Clause highlight hover effects */
+.clause-marker {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.clause-marker:hover {
+  transform: translateX(4px);
+}

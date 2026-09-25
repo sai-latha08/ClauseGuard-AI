@@ -1,0 +1,61 @@
+const fs = require('fs');
+const path = require('path');
+
+const sampleTermsText = `TERMS OF SERVICE AND USER AGREEMENT
+
+Last Updated: October 2026
+
+1. INTRODUCTION AND ACCEPTANCE OF TERMS
+Welcome to CloudSphere Services ("Company", "we", "us", or "our"). By accessing or using our platform, mobile applications, and associated services (collectively, the "Services"), you agree to be bound by these Terms of Service. If you do not agree to all terms and conditions, you must discontinue use immediately.
+
+2. ELIGIBILITY AND ACCOUNT SECURITY
+You must be at least 18 years of age to register for an account. You are solely responsible for maintaining the confidentiality of your credentials and all activities occurring under your account. You agree to notify us immediately of any unauthorized access.
+
+3. SUBSCRIPTION BILLING AND AUTOMATIC RENEWAL
+Subscriptions are billed on a recurring monthly or annual basis as selected upon checkout. The subscription will automatically renew at the end of each billing cycle for successive periods at the then-current standard rate, unless you cancel prior to the end of the current billing cycle. Your payment method on file will be charged automatically without prior notice.
+
+4. REFUND AND CANCELLATION POLICY
+All purchases, subscription fees, and transaction payments are strictly non-refundable and non-transferable. We do not provide refunds, credits, or prorated billing for partially used subscription periods, account downgrades, or service interruptions.
+
+5. UNILATERAL MODIFICATION OF TERMS
+We reserve the exclusive right to modify, amend, or update these Terms of Service at any time at our sole discretion. Any changes will become effective immediately upon posting to the website without direct notice to you. Your continued use of the Services constitutes acceptance of the modified Terms.
+
+6. DATA COLLECTION AND THIRD-PARTY DATA SHARING
+We collect personal information, usage analytics, location metrics, and device telemetry. We reserve the right to share your personal data with third-party partners, marketing affiliates, and data analytics providers for commercial profiling and targeted advertising purposes.
+
+7. USER CONTENT AND INTELLECTUAL PROPERTY LICENSE
+You retain ownership of the original text and files you submit. However, by uploading or submitting content to the Services, you grant the Company a perpetual, irrevocable, worldwide, royalty-free, and sublicensable license to use, reproduce, modify, adapt, distribute, and commercially exploit such content without compensation.
+
+8. ACCOUNT TERMINATION AND SUSPENSION
+The Company may terminate or suspend your account, delete your stored data, and restrict access to all Services at any time at our sole discretion without prior notice or liability, for any reason or no reason.
+
+9. DISCLAIMER OF WARRANTIES
+THE SERVICES ARE PROVIDED ON AN "AS IS" AND "AS AVAILABLE" BASIS WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, OR UNINTERRUPTED UPTIME.
+
+10. LIMITATION OF LIABILITY
+IN NO EVENT SHALL THE COMPANY, ITS DIRECTORS, OR AFFILIATES BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES. OUR TOTAL AGGREGATE LIABILITY FOR ALL CLAIMS UNDER THESE TERMS SHALL NOT EXCEED FIFTY DOLLARS ($50.00 USD) OR THE AMOUNT PAID BY YOU IN THE PRECEDING ONE MONTH.
+
+11. INDEMNIFICATION OBLIGATIONS
+You agree to indemnify, defend, and hold harmless the Company, its officers, employees, and licensors from and against any and all claims, liabilities, damages, losses, and legal expenses arising out of or in any way connected with your use of the Services or violation of these Terms.
+
+12. MANDATORY ARBITRATION AND CLASS ACTION WAIVER
+YOU AGREE THAT ANY DISPUTES OR CLAIMS ARISING OUT OF THESE TERMS SHALL BE RESOLVED EXCLUSIVELY THROUGH BINDING INDIVIDUAL ARBITRATION ADMINISTERED BY THE AMERICAN ARBITRATION ASSOCIATION. YOU EXPRESSLY WAIVE ANY RIGHT TO A JURY TRIAL OR TO PARTICIPATE IN ANY CLASS ACTION LAWSUIT.
+
+13. GOVERNING LAW AND EXCLUSIVE JURISDICTION
+These Terms shall be governed by and construed in accordance with the laws of the State of Delaware, without regard to conflict of law principles. Any legal proceeding shall be instituted exclusively in the federal or state courts located in Wilmington, Delaware.
+`;
+
+const sampleDocsDir = path.join(__dirname, '..', '..', 'sample-docs');
+if (!fs.existsSync(sampleDocsDir)) {
+  fs.mkdirSync(sampleDocsDir, { recursive: true });
+}
+
+const sampleFilePath = path.join(sampleDocsDir, 'sample_terms_and_conditions.txt');
+if (!fs.existsSync(sampleFilePath)) {
+  fs.writeFileSync(sampleFilePath, sampleTermsText, 'utf8');
+}
+
+module.exports = {
+  sampleFilePath,
+  sampleTermsText
+};

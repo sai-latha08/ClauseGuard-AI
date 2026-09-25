@@ -1,0 +1,26 @@
+{
+  "name": "clauseguard-ai",
+  "version": "1.0.0",
+  "description": "Intelligent Terms and Conditions Risk Analysis System Using AI, NLP and MERN",
+  "scripts": {
+    "install:server": "cd server && npm install",
+    "install:client": "cd client && npm install",
+    "install:all": "npm run install:server && npm run install:client",
+    "build:client": "cd client && npm run build",
+    "build": "npm run build:client",
+    "server": "cd server && npm run dev",
+    "client": "cd client && npm run dev",
+    "start": "cd server && npm start",
+    "ai": "cd ai-service && python main.py"
+  },
+  "keywords": [
+    "legal-tech",
+    "terms-and-conditions",
+    "nlp",
+    "mern",
+    "risk-analysis",
+    "rag"
+  ],
+  "author": "ClauseGuard AI Team",
+  "license": "ISC"
+}
