@@ -1,13 +1,87 @@
 import os
 import re
+import io
 from typing import List, Dict, Any
 
 class DocumentExtractor:
     """
     Extracts text from PDF, DOCX, and TXT files while preserving page numbers,
     cleaning up redundant whitespace, headers/footers, and encoding issues.
+    Supports file paths, raw byte streams, and raw text strings.
     """
     
+    @staticmethod
+    def extract_from_text(raw_text: str) -> List[Dict[str, Any]]:
+        cleaned_text = DocumentExtractor._clean_text(raw_text or "")
+        return [{
+            "page_number": 1,
+            "text": cleaned_text,
+            "char_count": len(cleaned_text),
+            "is_scanned": False
+        }]
+
+    @staticmethod
+    def extract_from_bytes(file_bytes: bytes, filename: str = "document.txt") -> List[Dict[str, Any]]:
+        ext = os.path.splitext(filename)[1].lower() if filename else ".txt"
+        
+        if ext == ".pdf":
+            pages_data = []
+            try:
+                import fitz
+                doc = fitz.open(stream=file_bytes, filetype="pdf")
+                for page_idx in range(len(doc)):
+                    page = doc[page_idx]
+                    text = page.get_text("text")
+                    cleaned_text = DocumentExtractor._clean_text(text)
+                    pages_data.append({
+                        "page_number": page_idx + 1,
+                        "text": cleaned_text,
+                        "char_count": len(cleaned_text),
+                        "is_scanned": len(cleaned_text.strip()) < 30
+                    })
+                doc.close()
+                return pages_data
+            except Exception:
+                try:
+                    import pypdf
+                    reader = pypdf.PdfReader(io.BytesIO(file_bytes))
+                    for page_idx, page in enumerate(reader.pages):
+                        text = page.extract_text() or ""
+                        cleaned_text = DocumentExtractor._clean_text(text)
+                        pages_data.append({
+                            "page_number": page_idx + 1,
+                            "text": cleaned_text,
+                            "char_count": len(cleaned_text),
+                            "is_scanned": len(cleaned_text.strip()) < 30
+                        })
+                    return pages_data
+                except Exception as e:
+                    raise ValueError(f"Failed to parse PDF bytes: {str(e)}")
+
+        elif ext in [".docx", ".doc"]:
+            try:
+                import docx
+                doc = docx.Document(io.BytesIO(file_bytes))
+                full_text = [p.text.strip() for p in doc.paragraphs if p.text.strip()]
+                combined_text = "\n\n".join(full_text)
+                cleaned_text = DocumentExtractor._clean_text(combined_text)
+                return [{
+                    "page_number": 1,
+                    "text": cleaned_text,
+                    "char_count": len(cleaned_text),
+                    "is_scanned": False
+                }]
+            except Exception as e:
+                raise ValueError(f"Failed to parse DOCX bytes: {str(e)}")
+
+        else:
+            # Plain text / fallback
+            try:
+                raw_text = file_bytes.decode("utf-8")
+            except UnicodeDecodeError:
+                raw_text = file_bytes.decode("latin-1", errors="replace")
+            return DocumentExtractor.extract_from_text(raw_text)
+
     @staticmethod
     def extract(file_path: str) -> List[Dict[str, Any]]:
         """

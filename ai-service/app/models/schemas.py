@@ -55,8 +55,10 @@ class RenewalInfo(BaseModel):
 
 class DocumentProcessRequest(BaseModel):
     document_id: str
-    file_path: str
-    filename: str
+    file_path: Optional[str] = None
+    filename: Optional[str] = "document.txt"
+    file_base64: Optional[str] = None
+    raw_text: Optional[str] = None
 
 class DocumentProcessResponse(BaseModel):
     document_id: str

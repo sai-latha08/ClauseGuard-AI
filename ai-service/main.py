@@ -1,4 +1,5 @@
 import os
+import base64
 import uvicorn
 from fastapi import FastAPI, HTTPException, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
@@ -44,6 +45,7 @@ app.add_middleware(
 # In-memory fast cache of processed clauses per document_id
 _DOCUMENT_CACHE: Dict[str, List[Dict[str, Any]]] = {}
 
+@app.get("/")
 @app.get("/health")
 def health_check():
     return {
@@ -56,7 +58,7 @@ def health_check():
 def process_document(payload: DocumentProcessRequest):
     """
     Complete analysis pipeline:
-    1. Extract text from PDF / DOCX / TXT with page tracking
+    1. Extract text from PDF / DOCX / TXT with page tracking (via base64, raw text, or disk path)
     2. Segment clauses
     3. Categorize each clause into 16 categories
     4. Compute risk factors, scores, compliance tags, and legal explanations
@@ -65,12 +67,22 @@ def process_document(payload: DocumentProcessRequest):
     7. Extract milestone dates, auto-renewal deadlines, and 60-second executive voice script
     8. Embed and index clauses into ChromaDB
     """
-    file_path = payload.file_path
-    if not os.path.exists(file_path):
-        raise HTTPException(status_code=404, detail=f"File not found on server: {file_path}")
+    pages_data = []
+    
+    if payload.file_base64:
+        try:
+            file_bytes = base64.b64decode(payload.file_base64)
+            pages_data = DocumentExtractor.extract_from_bytes(file_bytes, payload.filename or "document.txt")
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=f"Failed to decode base64 document: {str(e)}")
+    elif payload.raw_text:
+        pages_data = DocumentExtractor.extract_from_text(payload.raw_text)
+    elif payload.file_path and os.path.exists(payload.file_path):
+        pages_data = DocumentExtractor.extract(payload.file_path)
+    else:
+        raise HTTPException(status_code=400, detail="No valid file_base64, raw_text, or accessible file_path provided.")
 
     try:
-        pages_data = DocumentExtractor.extract(file_path)
         page_count = len(pages_data)
         
         raw_clauses = ClauseSegmenter.segment_pages(pages_data)

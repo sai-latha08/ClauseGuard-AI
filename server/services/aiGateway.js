@@ -2,16 +2,18 @@ const axios = require('axios');
 
 const AI_SERVICE_URL = process.env.AI_SERVICE_URL || 'http://127.0.0.1:8000';
 
+const fs = require('fs');
+
 class AIGateway {
   /**
    * Health check to ensure AI microservice is responsive
    */
   static async checkHealth() {
     try {
-      const response = await axios.get(`${AI_SERVICE_URL}/health`, { timeout: 10000 });
+      const response = await axios.get(`${AI_SERVICE_URL}/health`, { timeout: 15000 });
       return response.data;
     } catch (error) {
-      console.warn(`AI Service health check failed: ${error.message}`);
+      console.warn(`AI Service health check failed (${AI_SERVICE_URL}): ${error.message}`);
       return { status: 'offline', error: error.message };
     }
   }
@@ -20,20 +22,37 @@ class AIGateway {
    * Trigger complete document analysis pipeline
    */
   static async processDocument(documentId, filePath, filename) {
+    let fileBase64 = null;
+    let rawText = null;
+
+    if (filePath && fs.existsSync(filePath)) {
+      try {
+        const fileBuffer = fs.readFileSync(filePath);
+        fileBase64 = fileBuffer.toString('base64');
+        if (filename.endsWith('.txt') || filename.endsWith('.md')) {
+          rawText = fileBuffer.toString('utf8');
+        }
+      } catch (readErr) {
+        console.warn(`[AIGateway] Could not read file into buffer: ${readErr.message}`);
+      }
+    }
+
     try {
       const response = await axios.post(
         `${AI_SERVICE_URL}/api/v1/process-document`,
         {
           document_id: documentId.toString(),
           file_path: filePath,
-          filename: filename
+          filename: filename,
+          file_base64: fileBase64,
+          raw_text: rawText
         },
-        { timeout: 120000 } // 2 minutes timeout for large documents
+        { timeout: 120000 } // 2 minutes timeout for cold starts and heavy files
       );
       return response.data;
     } catch (error) {
       console.error(`AI Gateway processDocument error:`, error.response?.data || error.message);
-      throw new Error(error.response?.data?.detail || 'AI Service processing failed');
+      throw new Error(error.response?.data?.detail || error.message || 'AI Service processing failed');
     }
   }
 
