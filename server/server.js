@@ -75,6 +75,24 @@ if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
 }
 
+// Root welcome & status endpoint
+app.get('/', (req, res) => {
+  res.json({
+    name: 'ClauseGuard AI Backend API',
+    status: 'online',
+    version: '1.0.0',
+    description: 'Intelligent Terms & Conditions Risk Analysis API',
+    endpoints: {
+      health: '/health',
+      auth: '/api/auth',
+      documents: '/api/documents',
+      risk: '/api/risk',
+      qa: '/api/qa',
+      reports: '/api/reports'
+    }
+  });
+});
+
 // Health check
 app.get('/health', (req, res) => {
   res.json({
