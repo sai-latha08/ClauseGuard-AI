@@ -1,0 +1,37 @@
+services:
+  # 1. AI Microservice (FastAPI + ChromaDB)
+  - type: web
+    name: clauseguard-ai-engine
+    runtime: python
+    rootDir: ai-service
+    buildCommand: pip install --no-cache-dir -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    plan: free
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: CHROMA_PERSIST_DIR
+        value: /opt/render/project/src/chroma_db
+
+  # 2. Express Backend API
+  - type: web
+    name: clauseguard-server-api
+    runtime: node
+    rootDir: server
+    buildCommand: npm install
+    startCommand: npm start
+    plan: free
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: JWT_SECRET
+        generateValue: true
+      - key: MONGODB_URI
+        sync: false
+      - key: CLIENT_URL
+        sync: false
+      - key: AI_SERVICE_URL
+        fromService:
+          type: web
+          name: clauseguard-ai-engine
+          property: host
