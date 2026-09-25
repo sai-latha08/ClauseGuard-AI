@@ -304,10 +304,19 @@ function analyzeDocument(filePath, filename, rawText) {
     totalScore += c.risk_score;
   }
 
-  const avgScore = analyzedClauses.length > 0 ? Math.round(totalScore / analyzedClauses.length) : 35;
+  const maxScore = analyzedClauses.length > 0 ? Math.max(...analyzedClauses.map(c => c.risk_score)) : 0;
+  const avgScore = analyzedClauses.length > 0 ? (totalScore / analyzedClauses.length) : 0;
+  
+  // Weighted overall score reflecting high-severity provisions and cumulative risk
+  const weightedScore = (maxScore * 0.55) + (avgScore * 0.45);
+  const penalty = Math.min(15, riskDist.critical * 4 + riskDist.high * 2);
+  const finalDocScore = Math.min(99, Math.max(10, Math.round(weightedScore + penalty)));
+
   let overallRisk = 'LOW';
-  if (riskDist.critical > 0 || avgScore >= 65) overallRisk = 'HIGH';
-  else if (riskDist.high > 1 || avgScore >= 45) overallRisk = 'MEDIUM';
+  if (finalDocScore >= 76) overallRisk = 'CRITICAL';
+  else if (finalDocScore >= 51) overallRisk = 'HIGH';
+  else if (finalDocScore >= 26) overallRisk = 'MEDIUM';
+  else overallRisk = 'LOW';
 
   // Compliance Matrix
   const gdprViolations = analyzedClauses.filter(c => ['DATA_COLLECTION', 'THIRD_PARTY_SHARING'].includes(c.category) && c.risk_level === 'CRITICAL').length;
@@ -375,7 +384,7 @@ function analyzeDocument(filePath, filename, rawText) {
     'Retain a downloadable PDF copy of these analyzed terms with timestamp for your records.'
   ];
 
-  const summary = `This legal agreement contains ${analyzedClauses.length} clauses evaluated with an overall risk grade of ${overallRisk} (${avgScore}/100). The most significant provisions involve ${Object.keys(catDist).slice(0, 3).join(', ')}. Users should review auto-renewal terms, liability disclaimers, and dispute resolution guidelines prior to accepting.`;
+  const summary = `This legal agreement contains ${analyzedClauses.length} clauses evaluated with an overall risk grade of ${overallRisk} (${finalDocScore}/100). The most significant provisions involve ${Object.keys(catDist).slice(0, 3).join(', ')}. Users should review auto-renewal terms, liability disclaimers, and dispute resolution guidelines prior to accepting.`;
 
   const voiceScript = `ClauseGuard executive audio briefing for ${filename}. This agreement contains ${analyzedClauses.length} evaluated sections with an overall risk rating of ${overallRisk}. Key considerations include ${keyFindings[0]} and ${keyFindings[1]} Please review flagged sections before committing.`;
 
@@ -384,7 +393,7 @@ function analyzeDocument(filePath, filename, rawText) {
     filename: filename || 'document.txt',
     page_count: Math.max(1, Math.ceil(analyzedClauses.length / 4)),
     total_clauses: analyzedClauses.length,
-    overall_score: avgScore,
+    overall_score: finalDocScore,
     overall_risk: overallRisk,
     risk_distribution: riskDist,
     category_distribution: catDist,
