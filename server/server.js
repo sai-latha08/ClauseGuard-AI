@@ -31,6 +31,7 @@ connectDB();
 // Security Middleware
 app.use(helmet({
   crossOriginResourcePolicy: false,
+  crossOriginEmbedderPolicy: false
 }));
 
 // CORS Configuration
@@ -39,19 +40,46 @@ const allowedOrigins = [
   'http://localhost:3000',
   'http://127.0.0.1:5173',
   'http://127.0.0.1:3000',
+  'https://clause-guard-ai-murex.vercel.app',
   process.env.CLIENT_URL
 ].filter(Boolean);
 
-app.use(cors({
+const corsOptions = {
   origin: function (origin, callback) {
-    if (!origin || allowedOrigins.includes(origin) || origin.startsWith('http://localhost:')) {
-      callback(null, true);
-    } else {
-      callback(null, true); // Dev flexible
+    // Allow non-browser requests (e.g. curl, postman, server-to-server)
+    if (!origin) return callback(null, true);
+
+    // Allow localhost and local IP
+    if (origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:')) {
+      return callback(null, true);
     }
+
+    // Allow Vercel deployments (production + preview domains)
+    if (origin.endsWith('.vercel.app') || origin === 'https://clause-guard-ai-murex.vercel.app') {
+      return callback(null, true);
+    }
+
+    // Allow configured CLIENT_URL
+    if (process.env.CLIENT_URL) {
+      const sanitizedClientUrl = process.env.CLIENT_URL.trim().replace(/\/+$/, '');
+      if (origin === sanitizedClientUrl) {
+        return callback(null, true);
+      }
+    }
+
+    // Allow all other origins gracefully for public API flexibility
+    return callback(null, true);
   },
-  credentials: true
-}));
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
+  exposedHeaders: ['Authorization'],
+  preflightContinue: false,
+  optionsSuccessStatus: 204
+};
+
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
 
 // Rate Limiter
 const apiLimiter = rateLimit({

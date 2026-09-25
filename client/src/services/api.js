@@ -1,6 +1,21 @@
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const getApiBaseUrl = () => {
+  const envUrl = import.meta.env.VITE_API_URL;
+  if (envUrl && typeof envUrl === 'string' && envUrl.trim()) {
+    const sanitized = envUrl.trim().replace(/\/+$/, '');
+    return sanitized.endsWith('/api') ? sanitized : `${sanitized}/api`;
+  }
+  if (typeof window !== 'undefined') {
+    const hostname = window.location.hostname;
+    if (hostname !== 'localhost' && hostname !== '127.0.0.1') {
+      return 'https://clauseguard-ai-1-tegl.onrender.com/api';
+    }
+  }
+  return 'http://localhost:5000/api';
+};
+
+const API_BASE_URL = getApiBaseUrl();
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -26,11 +41,15 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      localStorage.removeItem('clauseguard_token');
-      localStorage.removeItem('clauseguard_user');
-      // If we are not already on login/register/landing, redirect
-      if (!window.location.pathname.match(/\/(login|register)?$/)) {
-        window.location.href = '/login';
+      const url = error.config?.url || '';
+      const isAuthAction = url.includes('/auth/login') || url.includes('/auth/register');
+      
+      if (!isAuthAction) {
+        localStorage.removeItem('clauseguard_token');
+        localStorage.removeItem('clauseguard_user');
+        if (typeof window !== 'undefined' && !window.location.pathname.match(/\/(login|register)?$/)) {
+          window.location.href = '/login';
+        }
       }
     }
     return Promise.reject(error);
